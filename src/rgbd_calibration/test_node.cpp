@@ -4,6 +4,8 @@
 
 #include <eigen_conversions/eigen_msg.h>
 
+#include <calibration_common/base/opencv_conversion.h>
+
 #include <calibration_common/pinhole/camera_model.h>
 #include <camera_info_manager/camera_info_manager.h>
 
@@ -237,7 +239,7 @@ bool TestNode::waitForMessages() const
     rate.sleep();
     ros::spinOnce();
   }
-  return checkerboard_array_msg_;
+  return checkerboard_array_msg_ != nullptr;
 }
 
 Checkerboard::Ptr TestNode::createCheckerboard(const CheckerboardMsg::ConstPtr & msg,
@@ -468,7 +470,6 @@ void TestNode::spin3 ()
 
         if (z > 0)
         {
-
           Point3 point_eigen;
           Point3 point_eigen_original;
 
@@ -477,11 +478,17 @@ void TestNode::spin3 ()
           point_eigen.z() = z;
 
           point_eigen_original = t_original * point_eigen;
-          Point2 point_image_original = color_sensor_->cameraModel()->project3dToPixel(point_eigen_original);
+
+//          cv::Point3d point_orig_cv;
+//          point_orig_cv.x = point_eigen_original.x();
+//          point_orig_cv.y = point_eigen_original.y();
+//          point_orig_cv.z = point_eigen_original.z();
+
+          auto point_image_original = color_sensor_->cameraModel()->project3dToPixel(point_eigen_original);
 
           uint16_t new_z_original = cv::saturate_cast<uint16_t>(cvRound(point_eigen_original.z() * 1000));
-          int x = cvRound(point_image_original[0]);
-          int y = cvRound(point_image_original[1]);
+          int x = cvRound(point_image_original.x());
+          int y = cvRound(point_image_original.y());
 
           if ((x >= 0 and x < depth.cols and y >= 0 and y < depth.rows) and
               (depth_2.at<uint16_t>(y, x) == 0 or new_z_original < depth_2.at<uint16_t>(y, x)))
@@ -495,11 +502,17 @@ void TestNode::spin3 ()
           point_eigen.z() = z;
 
           point_eigen = t * point_eigen;
-          Point2 point_image = color_sensor_->cameraModel()->project3dToPixel(point_eigen);
+
+//          cv::Point3d point_eigen_cv;
+//          point_eigen_cv.x = point_eigen.x();
+//          point_eigen_cv.y = point_eigen.y();
+//          point_eigen_cv.z = point_eigen.z();
+
+          auto point_image = color_sensor_->cameraModel()->project3dToPixel(point_eigen);
 
           uint16_t new_z = cv::saturate_cast<uint16_t>(cvRound(point_eigen.z() * 1000));
-          x = cvRound(point_image[0]);
-          y = cvRound(point_image[1]);
+          x = cvRound(point_image.x());
+          y = cvRound(point_image.y());
 
           if ((x >= 0 and x < depth.cols and y >= 0 and y < depth.rows) and
               (depth_und.at<uint16_t>(y, x) == 0 or new_z < depth_und.at<uint16_t>(y, x)))

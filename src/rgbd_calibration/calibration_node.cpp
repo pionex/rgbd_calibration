@@ -170,7 +170,7 @@ CalibrationNode::waitForMessages () const
     rate.sleep();
     ros::spinOnce();
   }
-  return checkerboard_array_msg_;
+  return checkerboard_array_msg_ != nullptr;
 }
 
 Checkerboard::Ptr
